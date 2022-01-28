@@ -20,7 +20,11 @@ app.use(cookieParser());
 
 // 解析token获取用户信息
 app.use(function(req, res, next) {
-    var token = req.cookies.token || req.headers['authorization'];
+    // console.log("**** begin ****");
+    // console.log(`cookies.token => ${req.cookies.token}`);
+    // console.log(`authorization => ${req.headers['authorization']}`);
+    var token = req.cookies.token; // || req.headers['authorization'];
+    // console.log({token});
     if(token == undefined) {
         return next();
     } else {
@@ -31,6 +35,8 @@ app.use(function(req, res, next) {
             return next();
         });
     }
+    // console.log("**** end ****");
+    // console.log("");
 });
 
 // 验证token是否过期并规定哪些路由不用验证
@@ -72,12 +78,13 @@ api.all('/test', function(req, res) {
 });
 
 api.post('/login', function(req, res) {
-    console.log(req.body);
+    // console.log(req.body);
     var username = req.body.username;
     var password = req.body.password;
     //生成token
     vertoken.setToken(username, 0).then((data)=>{
-        res.cookie("token", data, {maxAge: 60 * 1000, httpOnly: true});
+        res.cookie("token", "Bearer " + data, {maxAge: 60 * 1000, httpOnly: true});
+        // res.cookie("token", "Bearer " + data);
         res.json({token: data});
     });
 });
