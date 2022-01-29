@@ -1,11 +1,17 @@
 {
-  "name": "svelte-app",
+  "name": "GrowinPains_System",
   "version": "1.0.0",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
     "nodemon": "nodemon server/app.js",
-    "start": "node server/app.js"
+    "start": "node server/app.js",
+    "-----hooks-----": "",
+    "prenodemon": "npm run apidoc",
+    "prestart": "npm run apidoc",
+    "-----tools-----": "",
+    "apidoc": "apidoc -i server -e node_modules -e doc",
+    "apidoc_help": "apidoc -h"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.0.0",
@@ -23,7 +29,7 @@
     "svelte-preprocess": "^4.10.2"
   },
   "dependencies": {
-    "axios": "^0.25.0",
+    "apidoc": "^0.25.0",
     "body-parser": "^1.19.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",

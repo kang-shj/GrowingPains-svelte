@@ -40,23 +40,26 @@ app.use(function(req, res, next) {
 });
 
 // 验证token是否过期并规定哪些路由不用验证
-webUnless = [
-    '/',
-    '/global.css',
-    '/global.css',
-    '/favicon.png',
-    '/build/bundle.css',
-    '/build/bundle.js',
-    '/build/bundle.js.map',
-];
+// webUnless = ;
 app.use(expressJwt({
     algorithms: ['HS256'],
     secret: 'growin_pains'
 }).unless({
     path: [
+        { url: /^\/.*/, methods: ['GET'] },
+    ].concat([
         '/api/test',
         '/api/login',
-    ].concat(webUnless)
+    ]).concat([
+        '/doc',
+        { url: /^\/vendor\/.*/, methods: ['GET'] },
+        { url: /^\/img\/.*/, methods: ['GET'] },
+        { url: /^\/css\/.*/, methods: ['GET'] },
+        { url: /^\/locales\/.*/, methods: ['GET'] },
+    ]).concat([
+        '/',
+        { url: /^\/build\/.*/, methods: ['GET'] },
+    ])
 }));
 
 // 当token失效返回提示信息
@@ -77,6 +80,12 @@ api.all('/test', function(req, res) {
     res.send("abcdefg");
 });
 
+/**
+ * @api {post} /api/login 用户登录
+ * @apiGroup 用户
+ * @apiParam {String} username 用户名称
+ * @apiParam {String} password 密码
+ */
 api.post('/login', function(req, res) {
     // console.log(req.body);
     var username = req.body.username;
@@ -93,13 +102,15 @@ api.use('/user', require('./api/user.js'));
 
 /* End api */
 
-/* web client */
+/* apidoc */
+app.use('/doc', express.static('doc'));
+/* End apidoc*/
 
+/* web client */
 app.use(express.static('public'));
 app.use('*', (req, res) => {
     res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
 });
-
 /* End web client */
 
 app.listen(port, () => {
