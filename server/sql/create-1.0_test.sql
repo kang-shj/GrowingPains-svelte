@@ -1,13 +1,83 @@
-DROP DATABASE IF EXISTS growingPainslib_test;
-CREATE DATABASE growingPainslib_test;
-USE growingPainslib_test;
+DROP DATABASE IF EXISTS growingpainslib_test;
+CREATE DATABASE growingpainslib_test;
+USE growingpainslib_test;
+
+/* 日志表 */
+CREATE TABLE gp_journal (
+	id INT UNSIGNED AUTO_INCREMENT NOT NULL,
+	time DATETIME NOT NULL,						/*时间*/
+	userId INT UNSIGNED,						/*用户ID*/
+	sql_ VARCHAR(100) NOT NULL,					/*sql语句*/
+	notes VARCHAR(60),							/*注释*/
+	PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE PROCEDURE addjournal(
+	IN in_userId INT,
+	IN in_sql VARCHAR(100),
+	IN in_notes VARCHAR(60)
+)
+BEGIN
+	INSERT INTO gp_journal (time, userId, sql_, notes) VALUES (NOW(), in_userId, in_sql, in_notes);
+END;
 
 /* 用户表 */
 CREATE TABLE gp_user (
 	id INT UNSIGNED AUTO_INCREMENT NOT NULL,
-	name VARCHAR(20) NOT NULL,		/*名字*/
+	name VARCHAR(20) NOT NULL,			/*名字*/
 	PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE gp_login (
+	id INT UNSIGNED AUTO_INCREMENT NOT NULL,
+	userId INT UNSIGNED NOT NULL,		/*用户ID*/
+	password VARCHAR(20) NOT NULL,		/*密码*/
+	FOREIGN KEY (userId) REFERENCES gp_user(id),
+	PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE PROCEDURE register_password(
+	IN in_name VARCHAR(20),
+	IN in_password VARCHAR(20),
+	OUT out_result INT
+)
+BEGIN
+	DECLARE Count INT DEFAULT 0;
+	SELECT COUNT(*) FROM gp_user WHERE name=in_name INTO Count;
+	IF Count = 0 THEN
+		INSERT INTO gp_user (name) VALUES (in_name);
+		SELECT MAX(id) FROM gp_user INTO out_result;
+		INSERT INTO gp_login (userId, password) VALUES (out_result, in_password);
+		CALL addjournal(out_result,
+			CONCAT('INSERT INTO gp_user (name, password) VALUES (''', in_name, ''', in_password);'),
+			'Register'
+		);
+	ELSE
+		SET out_result = -1;
+	END IF;
+	SELECT out_result;
+END;
+
+CREATE PROCEDURE login_password(
+	IN in_name VARCHAR(20),
+	IN in_password VARCHAR(20),
+	OUT out_result INT
+)
+BEGIN
+	DECLARE notes VARCHAR(60) DEFAULT "";
+	SELECT gp_user.id FROM gp_user,gp_login WHERE gp_user.id=gp_login.userId AND gp_user.name=in_name AND gp_login.password=in_password INTO out_result;
+	IF out_result > 0 THEN
+		SET notes = 'login ok';
+	ELSE
+		SET notes = 'login faild';
+	END IF;
+	CALL addjournal(0,
+		CONCAT('SELECT id FROM gp_user WHERE name=''', in_name, ''',password=in_password INTO out_result;'),
+		notes
+	);
+	SELECT out_result;
+END;
+
 
 /* 家庭表 */
 CREATE TABLE gp_family (
@@ -22,8 +92,8 @@ CREATE TABLE gp_role (
 	name VARCHAR(20) NOT NULL,
 	PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-INSERT INTO gp_role (name) VALUES ("孩子");
-INSERT INTO gp_role (name) VALUES ("家长");
+INSERT INTO gp_role (name) VALUES ("child");
+INSERT INTO gp_role (name) VALUES ("parent");
 
 /* 家庭成员连接表 */
 CREATE TABLE gp_member (

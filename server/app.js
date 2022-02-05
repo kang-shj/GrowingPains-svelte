@@ -40,7 +40,6 @@ app.use(function(req, res, next) {
 });
 
 // 验证token是否过期并规定哪些路由不用验证
-// webUnless = ;
 app.use(expressJwt({
     algorithms: ['HS256'],
     secret: 'growin_pains'
@@ -49,7 +48,8 @@ app.use(expressJwt({
         { url: /^\/.*/, methods: ['GET'] },
     ].concat([
         '/api/test',
-        '/api/login',
+        '/api/register_password',
+        '/api/login_password',
     ]).concat([
         '/doc',
         { url: /^\/vendor\/.*/, methods: ['GET'] },
@@ -71,6 +71,16 @@ app.use(function(err, req, res, next) {
 
 /* End token*/
 
+/* mysql */
+const sqlHelper = require("./dao/sqlHelper");
+const { VAR_STRING } = require('mysql/lib/protocol/constants/types');
+sqlHelper.init({
+    host: "cooljie2000.oicp.net",
+    port: "3306",
+    database: "growingpainslib_test",
+}, 'kangsj', 'kjy08191211');
+/* End mysql */
+
 /* api */
 
 var api = express.Router();
@@ -81,20 +91,63 @@ api.all('/test', function(req, res) {
 });
 
 /**
+ * @api {post} /api/register 用户注册
+ * @apiGroup User
+ * @apiParam {String} username 用户名称
+ * @apiParam {String} password 密码
+ * @apiSuccess {Number} userId 用户Id
+ */
+api.post('/register_password', function(req, res) {
+    var username = req.body.username;
+    var password = req.body.password;
+
+    sqlHelper.query(`CALL register('${username}', '${password}', @result)`).then(out => {
+        console.log({out});
+        var result = out[0][0];
+        res.json({userId: result.out_result});
+    });
+});
+
+/**
  * @api {post} /api/login 用户登录
- * @apiGroup 用户
+ * @apiGroup User
  * @apiParam {String} username 用户名称
  * @apiParam {String} password 密码
  */
-api.post('/login', function(req, res) {
-    // console.log(req.body);
+api.post('/login_password', function(req, res) {
+    console.log('req.body => ', req.body);
+
     var username = req.body.username;
     var password = req.body.password;
-    //生成token
-    vertoken.setToken(username, 0).then((data)=>{
-        res.cookie("token", "Bearer " + data, {maxAge: 60 * 1000, httpOnly: true});
-        // res.cookie("token", "Bearer " + data);
-        res.json({token: data});
+
+    if (username === undefined || username.isEmpty ||
+        password === undefined || password.isEmpty
+    ) {
+        res.json({token: "login error"});
+        return;
+    } 
+
+    sqlHelper.query(`CALL login('${username}', '${password}', @result)`).then(out => {
+        console.log({out});
+        var result = out[0][0];
+        if (result.out_result > 0) {
+            // //生成token
+            vertoken.setToken({
+                userId: result.out_result,
+                name: username
+            }, 0, {
+                expiresIn: 60 * 60 * 24 // 授权时效24小时
+            }).then((data)=>{
+                res.cookie("token", "Bearer " + data, {maxAge: 60 * 1000, httpOnly: true});
+                // res.cookie("token", "Bearer " + data);
+                res.json({
+                    userId: result.out_result,
+                    token: data
+                });
+            });
+        } else {
+            res.json({token: "login error"});
+        }
     });
 });
 
@@ -116,3 +169,5 @@ app.use('*', (req, res) => {
 app.listen(port, () => {
     console.log(`Server is up at port ${port}`);
 });
+
+

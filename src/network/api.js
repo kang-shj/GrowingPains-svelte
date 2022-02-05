@@ -5,8 +5,8 @@ let token = "";
 export default {
   login: function(username, password) {
     return new Promise((resolve, reject) => {
-      comm.post("/api/login", {
-        username: "kang",
+      comm.post("/api/login_password", {
+        username: "kangsj",
         password: "123456"
       }).then(response => {
         token = response.token;
