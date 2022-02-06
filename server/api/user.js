@@ -1,15 +1,48 @@
 const router = require('express').Router();
 const sqlHelper = require("../dao/sqlHelper");
 
+
 /**
- * @api {get} /api/user/user 获取用户信息
+ * @api {get} /api/user/familys 获取用户家庭列表
  * @apiGroup User
+ * @apiSuccess {Object}   familys 家庭列表
+ * @apiSuccess {Number}   familys.id    家庭Id
+ * @apiSuccess {String}   familys.name    家庭名称
+ * @apiSuccess {String}   familys.role    角色
+ * @apiSuccess {String}   familys.mark    标记
  */
-router.get("/user", function(req, res) {
-  console.log("req.data => ", req.data);
+router.get("/familys", function(req, res) {
   var user = req.data.name;
 
-  sqlHelper.query(`SELECT * FROM gp_user WHERE id=${user.userId}`).then(out => {
+  sqlHelper.query(`
+    SELECT gp_family.id, gp_family.name, gp_role.name AS role, gp_member.mark
+    FROM gp_member
+    INNER JOIN gp_family ON gp_member.familyId=gp_family.id
+    INNER JOIN gp_role ON gp_member.roleId=gp_role.id
+    WHERE userId=${user.userId}
+  `, "get user familys").then(out => {
+    res.send(out);
+  });
+});
+
+/**
+ * @api {get} /api/user/:id 获取用户信息
+ * @apiGroup User
+ * @apiParam {Number} [id] 要获取的用户id，不填为获取登录用户
+ * @apiSuccess {Object}   data          用户数据
+ * @apiSuccess {String}   data.name     用户名称
+ */
+router.get("/:id", function(req, res) {
+  // console.log("req.data => ", req.data);
+  var user = req.data.name;
+
+  var id = req.params.id || user.userId;
+
+  sqlHelper.query(`
+    SELECT *
+    FROM gp_user
+    WHERE id=${id}
+  `, "get user info").then(out => {
     res.send(out[0]);
   });
 });

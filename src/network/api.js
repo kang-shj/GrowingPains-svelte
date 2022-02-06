@@ -14,11 +14,20 @@ export default {
       })
     });
   },
+  
   getUser: function() {
     return comm.get("/api/user/user", null, {
 			headers: {
 				'Authorization': 'Bearer ' + token
 			}
 		});
+  },
+
+  getFamily: function() {
+    return comm.get("/api/user/familys", null, {
+			headers: {
+				'Authorization': 'Bearer ' + token
+			}
+    });
   }
 }

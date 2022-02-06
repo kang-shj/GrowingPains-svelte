@@ -9,7 +9,12 @@ function init(config, user, password) {
   }));
 }
 
-function query(sql) {
+var userId = 0;
+function setUserId(id) {
+  userId = id;
+} 
+
+function query(sql, notes) {
   return new Promise((resolve, reject) => {
     if (pool !== null) {
       pool.getConnection((err1, connection) => {
@@ -18,7 +23,7 @@ function query(sql) {
           reject(err1);
         } else {
           // console.log({connection});
-          journal(connection, 0, sql, "any");
+          journal(connection, userId, sql, notes || "");
 
           console.log('sql query => ' + sql);
           connection.query(sql, (err2, result) => {
@@ -64,4 +69,5 @@ async function journal(connection, userId, sql, notes = "") {
 module.exports = {
   init: init,
   query: query,
+  setUserId: setUserId
 };

@@ -42,9 +42,9 @@
 			<h1>Place click tab.</h1>
 		{/if}
 	</Menu>
-  <Button filled on:click={() => push("/other")}>Go To Other Page</Button>
+  <!-- <Button filled on:click={() => push("/other")}>Go To Other Page</Button>
   <Button filled on:click={onLogin}>Login</Button>
-  <Button filled on:click={onGetUser}>Get User</Button>
+  <Button filled on:click={onGetUser}>Get User</Button> -->
   <!-- <a href="/other" use:link>click me</a> -->
 </main>
 

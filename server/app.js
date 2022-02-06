@@ -1,3 +1,5 @@
+// apidoc -- https://apidocjs.com/
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -101,7 +103,7 @@ api.post('/register_password', function(req, res) {
     var username = req.body.username;
     var password = req.body.password;
 
-    sqlHelper.query(`CALL register('${username}', '${password}', @result)`).then(out => {
+    sqlHelper.query(`CALL register_password('${username}', '${password}', @result)`).then(out => {
         console.log({out});
         var result = out[0][0];
         res.json({userId: result.out_result});
@@ -127,10 +129,15 @@ api.post('/login_password', function(req, res) {
         return;
     } 
 
-    sqlHelper.query(`CALL login('${username}', '${password}', @result)`).then(out => {
+    sqlHelper.query(`CALL login_password('${username}', '${password}', @result)`).then(async out => {
         console.log({out});
         var result = out[0][0];
         if (result.out_result > 0) {
+            var info = await sqlHelper.query(`
+                SELECT * FROM gp_user WHERE id=${result.out_result}
+            `);
+
+            sqlHelper.setUserId(result.out_result);
             // //生成token
             vertoken.setToken({
                 userId: result.out_result,
@@ -141,7 +148,7 @@ api.post('/login_password', function(req, res) {
                 res.cookie("token", "Bearer " + data, {maxAge: 60 * 1000, httpOnly: true});
                 // res.cookie("token", "Bearer " + data);
                 res.json({
-                    userId: result.out_result,
+                    data: info[0],
                     token: data
                 });
             });
