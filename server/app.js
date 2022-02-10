@@ -20,20 +20,38 @@ var vertoken = require('./token.js');
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
 
+app.use(function(req, res, next) {
+    console.log();
+    console.log(`[${req.method}] -- ${req.url}`);
+    if (req.method === "GET") {
+        console.log("    query => ", req.query);
+    } else {
+        console.log("    body  => ", req.body);
+    }
+    next();
+})
+
 // 解析token获取用户信息
 app.use(function(req, res, next) {
     // console.log("**** begin ****");
+    // console.log({req});
+    // console.log("headers => ", req.headers);
     // console.log(`cookies.token => ${req.cookies.token}`);
     // console.log(`authorization => ${req.headers['authorization']}`);
-    var token = req.cookies.token; // || req.headers['authorization'];
-    // console.log({token});
+    var token = req.cookies.token || req.headers['authorization'];
+    console.log({token});
+    if (req.headers['authorization'] === undefined) {
+        req.headers['authorization'] = token;
+    }
     if(token == undefined) {
         return next();
     } else {
         vertoken.verToken(token).then((data) => {
-            req.data = data;
+            req.user = data.name;
+            console.log(req.user);
             return next();
         }).catch((error) => {
+            console.log({error});
             return next();
         });
     }
@@ -47,27 +65,30 @@ app.use(expressJwt({
     secret: 'growin_pains'
 }).unless({
     path: [
-        { url: /^\/.*/, methods: ['GET'] },
+        // { url: /^\/[^\/]*\..*/, methods: ['GET'] }, // 根目录下文件 get
+        { url: /\/.*\..*/, methods: ['GET'] }, // 任意路径的文件 get
     ].concat([
         '/api/test',
         '/api/register_password',
         '/api/login_password',
     ]).concat([
-        '/doc',
-        { url: /^\/vendor\/.*/, methods: ['GET'] },
-        { url: /^\/img\/.*/, methods: ['GET'] },
-        { url: /^\/css\/.*/, methods: ['GET'] },
-        { url: /^\/locales\/.*/, methods: ['GET'] },
+        '/doc/',
+        // { url: /^\/vendor\/.*\..*/, methods: ['GET'] },
+        // { url: /^\/img\/.*\..*/, methods: ['GET'] },
+        // { url: /^\/css\/.*\..*/, methods: ['GET'] },
+        // { url: /^\/locales\/.*\..*/, methods: ['GET'] },
     ]).concat([
         '/',
-        { url: /^\/build\/.*/, methods: ['GET'] },
+        // { url: /^\/build\/.*\..*/, methods: ['GET'] },
     ])
 }));
 
 // 当token失效返回提示信息
 app.use(function(err, req, res, next) {
     if (err.status == 401) {
-        return res.status(401).send('token失效');
+        return res.status(401).json({
+            error: 'token失效'
+        });
     }
 });
 
@@ -159,6 +180,7 @@ api.post('/login_password', function(req, res) {
 });
 
 api.use('/user', require('./api/user.js'));
+api.use('/family', require('./api/family.js'));
 
 /* End api */
 

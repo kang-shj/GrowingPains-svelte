@@ -23,7 +23,6 @@ function query(sql, notes) {
           reject(err1);
         } else {
           // console.log({connection});
-          journal(connection, userId, sql, notes || "");
 
           console.log('sql query => ' + sql);
           connection.query(sql, (err2, result) => {
@@ -36,6 +35,13 @@ function query(sql, notes) {
             }
             connection.release();
           });
+
+          // 日志
+          // try {
+          //   journal(connection, userId, sql, notes || "");
+          // } catch(e) {
+          //   console.log({e});
+          // }
         }
       });
     } else {

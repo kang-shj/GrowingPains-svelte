@@ -1,7 +1,6 @@
 const router = require('express').Router();
 const sqlHelper = require("../dao/sqlHelper");
 
-
 /**
  * @api {get} /api/user/familys 获取用户家庭列表
  * @apiGroup User
@@ -12,7 +11,7 @@ const sqlHelper = require("../dao/sqlHelper");
  * @apiSuccess {String}   familys.mark    标记
  */
 router.get("/familys", function(req, res) {
-  var user = req.data.name;
+  var user = req.user.name;
 
   sqlHelper.query(`
     SELECT gp_family.id, gp_family.name, gp_role.name AS role, gp_member.mark
@@ -21,7 +20,7 @@ router.get("/familys", function(req, res) {
     INNER JOIN gp_role ON gp_member.roleId=gp_role.id
     WHERE userId=${user.userId}
   `, "get user familys").then(out => {
-    res.send(out);
+    res.send({data: out});
   });
 });
 
@@ -34,9 +33,9 @@ router.get("/familys", function(req, res) {
  */
 router.get("/:id", function(req, res) {
   // console.log("req.data => ", req.data);
-  var user = req.data.name;
+  var user = req.user;
 
-  var id = req.params.id || user.userId;
+  var id = req.query.id || user.userId;
 
   sqlHelper.query(`
     SELECT *

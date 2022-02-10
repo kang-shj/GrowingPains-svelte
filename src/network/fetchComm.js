@@ -1,29 +1,40 @@
 import Comm from './comm'
 
 function comm(url, option) {
-  var request = Object.assign(option, {
-    // mode: 'cors', // no-cors, *cors, same-origin
-    // cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-    // credentials: 'same-origin', // include, *same-origin, omit
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-    	// 'Content-Type': 'application/x-www-form-urlencoded',
-    	// 'Authorization': 'Bearer ' + token
-    },
-    // redirect: 'follow', // manual, *follow, error
-    // referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+  return new Promise((resolve, reject) => {
+    var request = Object.assign({
+      // mode: 'cors', // no-cors, *cors, same-origin
+      // cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+      credentials: 'same-origin', // include, *same-origin, omit
+      headers: Object.assign({
+        'Content-Type': 'application/json; charset=utf-8',
+        // 'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': 'Bearer ' + Comm.token
+      }, option.headers || {}),
+      // redirect: 'follow', // manual, *follow, error
+      // referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+    }, option);
+  
+    if (request.method === undefined) {
+      request["method"] = "GET";
+    }
+  
+    console.log(`[${request.method}] -->> ${url}`, JSON.parse(request.body || "{}")
+      , request.headers
+    );
+    fetch(url, request).then(
+      response => response.json()
+    ).then(response => {
+      console.log(`[${request.method}] <<-- ${url}`, response);
+      resolve(response);
+    }).catch(error => {
+      console.log(error);
+      reject(error);
+    });
   });
-
-  if (request.method === undefined) {
-    request["method"] = "GET";
-  }
-
-  return fetch(url, request).then(
-    response => response.json()
-  );
 }
 
-function get(api, data, option = {}) {
+function get(api, data = null, option = {}) {
   let request = Object.assign(option, {
     method: "GET",
   });
@@ -38,10 +49,10 @@ function get(api, data, option = {}) {
   return comm(Comm.Host + api + params, request);
 }
 
-function post(api, data, option = {}) {
+function post(api, data = null, option = {}) {
   let request = Object.assign(option, {
     method: "POST",
-    body: JSON.stringify(data)
+    body: JSON.stringify(data || {})
   });
 
   return comm(Comm.Host + api, request);

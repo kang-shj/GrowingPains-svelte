@@ -1,22 +1,23 @@
-const { get } = require('express/lib/response');
-
 const router = require('express').Router();
+const sqlHelper = require("../dao/sqlHelper");
 
 var queryFamilyId = function(familyId, familyName, notes = "") {
-  if (familyId == undefined && familyName == undefined) {
-    return -1;
-  }
-
-  if (familyId != undefined) {
-    return familyId;
-  } else {
-    familyId = await sqlHelper.query(`
-      SELECT id
-      FROM gp_family
-      WHERE name=${familyName}
-    `, notes + " find family id");
-    return familyId;
-  }
+  return new Promise(async (resolve, reject) => {
+    if (familyId == undefined && familyName == undefined) {
+      resolve(-1);
+    }
+  
+    if (familyId != undefined) {
+      resolve(familyId);
+    } else {
+      familyId = await sqlHelper.query(`
+        SELECT id
+        FROM gp_family
+        WHERE name=${familyName}
+      `, notes + " find family id");
+      resolve(familyId);
+    }
+  });
 }
 
 /**
@@ -32,8 +33,6 @@ var queryFamilyId = function(familyId, familyName, notes = "") {
  * @apiSuccess {Number} familyId 家庭Id
  */
 router.post("/create", function(req, res) {
-  var user = req.data.name;
-
   var name = req.body.name;
 
   sqlHelper.query(`
@@ -54,8 +53,8 @@ router.post("/create", function(req, res) {
  * @apiParam {String} mark 标记
  * @apiSuccess {Number} memberId 成员Id
  */
-router.post("/add_member", function(req, res) {
-  var user = req.data.name;
+router.post("/add_member", async function(req, res) {
+  var user = req.user;
 
   var userId = req.body.userId;
   var userName = req.body.userName;
@@ -140,7 +139,7 @@ router.get("/get_members", function(req, res) {
  * @apiParam {String} description 规则描述
  * @apiParam {Number} scoring 规则分数
  */
-router.post("/add_rule", function(req, res) {
+router.post("/add_rule", async function(req, res) {
   if (req.body.description == undefined) {
     res.send({error: ""});
     return;
@@ -149,7 +148,7 @@ router.post("/add_rule", function(req, res) {
     res.send({error: ""});
     return;
   }
-  var familyId = queryFamilyId(req.body.familyId, req.body.familyName, "add rule");
+  var familyId = await queryFamilyId(req.body.familyId, req.body.familyName, "add rule");
   if (familyId < 0) {
     res.send({error: ""});
     return;
@@ -157,7 +156,7 @@ router.post("/add_rule", function(req, res) {
 
   sqlHelper.query(`
     INSERT INTO gp_rule (familyId, description, scoring)
-    VALUES (${familyId}, ${req.body.description}, ${roleId}, '${mark}')
+    VALUES (${familyId}, '${req.body.description}', ${req.body.scoring})
   `).then(out => {
     res.send({data: out});
   });
@@ -172,8 +171,8 @@ router.post("/add_rule", function(req, res) {
  * @apiSuccess {String} members.description 规则描述
  * @apiSuccess {Number} members.scoring 规则分数
  */
-router.get("/get_rules", function(req, res) {
-  var familyId = queryFamilyId(req.body.familyId, req.body.familyName, "add rule");
+router.get("/get_rules", async function(req, res) {
+  var familyId = await queryFamilyId(req.query.familyId, req.query.familyName, "add rule");
   if (familyId < 0) {
     res.send({error: ""});
     return;
@@ -182,7 +181,7 @@ router.get("/get_rules", function(req, res) {
   sqlHelper.query(`
     SELECT description, scoring
     FROM gp_rule
-    WHRER familyId=${familyId}
+    WHERE familyId=${familyId}
   `).then(out => {
     res.send({data: out});
   });
@@ -200,3 +199,5 @@ router.get("/get_rules", function(req, res) {
 router.get("/get_rules", function(req, res) {
   
 });
+
+module.exports = router;
