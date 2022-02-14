@@ -5,9 +5,10 @@
 
   import Menu from '../views/Menu.svelte';
   import Home from "./Home.svelte";
-	import One from './Rule.svelte'
-	import Two from './Two.svelte'
+	import Rule from './Rule.svelte'
+	import User from './User.svelte'
 
+	import { user, family } from '../store'
 	import api from '../network/api'
 
 	onMount(() => {
@@ -17,6 +18,15 @@
 			replace("/login");
 		} else {
 			api.setToken(token);
+			api.getUser().then(response => {
+				user.set(response);
+				return api.getFamilyLink();
+			}).then(response => {
+				console.log("link ", response);
+				return api.getFamily(response.familyId);
+			}).then(response => {
+				family.set(response);
+			});
 		}
   });
 
@@ -34,19 +44,13 @@
 		{#if curTab === tabs[0]}
       <Home />
 		{:else if curTab === tabs[1]}
-			<One />
+			<Rule />
 		{:else if curTab === tabs[2]}
-			<Two />
+			<User />
 		{:else}
 			<h1>Place click tab.</h1>
 		{/if}
 	</Menu>
-  <Button filled on:click={() => push("/login")}>Go To Login Page</Button>
-  <!-- <Button filled on:click={() => push("/other")}>Go To Other Page</Button>
-  <a href="/other" use:link>click me</a> -->
-	<!-- <Button filled on:click={() => api.getFamily().then(response => {
-		console.log({response});
-	})}>Get User</Button> -->
 </main>
 
 <style>

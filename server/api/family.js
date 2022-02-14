@@ -39,7 +39,9 @@ router.post("/create", function(req, res) {
     INSERT INTO gp_family (name)
     VALUES ('${name}')
   `, "create family").then(out => {
-    res.send(out[0]);
+    res.json({
+      data: out
+    });
   });
 });
 
@@ -54,7 +56,7 @@ router.post("/create", function(req, res) {
  * @apiSuccess {Number} memberId 成员Id
  */
 router.post("/add_member", async function(req, res) {
-  var user = req.user;
+  // var user = req.user.name;
 
   var userId = req.body.userId;
   var userName = req.body.userName;
@@ -74,7 +76,7 @@ router.post("/add_member", async function(req, res) {
     return;
   }
 
-  var familyId = queryFamilyId(req.body.familyId, req.body.familyName, "add member");
+  var familyId = await queryFamilyId(req.body.familyId, req.body.familyName, "add member");
   if (familyId < 0) {
     res.send({error: ""});
     return;
@@ -84,24 +86,28 @@ router.post("/add_member", async function(req, res) {
     userId = await sqlHelper.query(`
       SELECT id
       FROM gp_user
-      WHERE name=${userName}
+      WHERE name='${userName}'
     `, "add member find user id");
   }
 
-  var roleId = await sqlHelper.query(`
+  var role = await sqlHelper.query(`
     SELECT id
     FROM gp_role
-    WHERE name=${role}
+    WHERE name='${role}'
   `, "add member find role id");
 
+  console.log({familyId});
   sqlHelper.query(`
     INSERT INTO gp_member (familyId, userId, roleId, mark)
-    VALUES (${familyId}, ${userId}, ${roleId}, '${mark}')
+    VALUES (${familyId}, ${userId}, ${role[0].id}, '${mark}')
   `, "add member").then(out => {
-    res.send(out[0]);
+    return sqlHelper.query(`SELECT * FROM gp_member WHERE id=${out.insertId}`, "add member reject");
+  }).then(out => {
+    res.send({
+      data: out[0]
+    });
   });
 });
-
 
 /**
  * @api {get} /api/family/get_members 获取家庭成员
@@ -198,6 +204,40 @@ router.get("/get_rules", async function(req, res) {
  */
 router.get("/get_rules", function(req, res) {
   
+});
+
+/**
+ * @api {get} /api/family/:id 获取家庭信息
+ * @apiGroup Family
+ * @apiParam {Number} [id] 要获取的用户id，不填为获取登录用户
+ * @apiSuccess {Object}   data          家庭数据
+ * @apiSuccess {String}   data.name     家庭名称
+ */
+router.get("/:id", function(req, res) {
+  var id = req.params.id;
+
+  if (id === undefined) {
+    res.json({
+      error: "id is undefined"
+    });
+    return;
+  }
+
+  sqlHelper.query(`
+    SELECT *
+    FROM gp_family
+    WHERE id=${id}
+  `, "get family info").then(out => {
+    if (out.length > 0) {
+      res.send({
+        data: out[0]
+      });
+    } else {
+      res.json({
+        error: "家庭不存在。"
+      });
+    }
+  });
 });
 
 module.exports = router;

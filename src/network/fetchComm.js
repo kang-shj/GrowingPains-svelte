@@ -22,13 +22,17 @@ function comm(url, option) {
     console.log(`[${request.method}] -->> ${url}`, JSON.parse(request.body || "{}")
       , request.headers
     );
-    fetch(url, request).then(
-      response => response.json()
-    ).then(response => {
-      console.log(`[${request.method}] <<-- ${url}`, response);
-      resolve(response);
+    fetch(url, request).then(response => {
+      response.json().then(data => {
+        console.log(`[${request.method}] <<-- ${url}`, data);
+        if (response.ok) {
+          resolve(data);
+        } else {
+          reject(data);
+        }
+      });
     }).catch(error => {
-      console.log(error);
+      console.log({error});
       reject(error);
     });
   });
@@ -39,8 +43,9 @@ function get(api, data = null, option = {}) {
     method: "GET",
   });
 
-  let params = "?"
+  let params = "";
   if (data) {
+    params = "?";
     for(let key in data) {
       params = params + key + '=' + data[key] + '&';
     }

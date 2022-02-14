@@ -25,6 +25,41 @@ router.get("/familys", function(req, res) {
 });
 
 /**
+ * @api {get} /api/user/family_link 获取用户当前家庭
+ * @apiSuccess {Number}   familyId    家庭Id
+ */
+router.get("/family_link", function(req, res) {
+  var user = req.user.name;
+
+  sqlHelper.query(`
+    SELECT *
+    FROM gp_link_family
+    WHERE userId=${user.userId}
+  `, "get user family link").then(out => {
+    res.json({
+      data: out[0]
+    });
+  });
+});
+
+router.post("/link_family", function(req, res) {
+  var user = req.user.name;
+  // sqlHelper.query(`
+  //   INSERT INTO gp_link_family (userId, familyId)
+  //   VALUES (${user.userId}, ${req.body.familyId})
+  // `, "link family").then(out => {
+  sqlHelper.query(`CALL link_family(${user.userId}, ${req.body.familyId}, @result)`).then(out => {
+    var result = out[0][0];
+    // console.log({result});
+    return sqlHelper.query(`SELECT * FROM gp_link_family WHERE id=${result.out_result}`, "link family reject");
+  }).then(out => {
+    res.send({
+      data: out[0]
+    });
+  });
+});
+
+/**
  * @api {get} /api/user/:id 获取用户信息
  * @apiGroup User
  * @apiParam {Number} [id] 要获取的用户id，不填为获取登录用户
@@ -32,18 +67,48 @@ router.get("/familys", function(req, res) {
  * @apiSuccess {String}   data.name     用户名称
  */
 router.get("/:id", function(req, res) {
-  // console.log("req.data => ", req.data);
-  var user = req.user;
+  getUser(req, res);
+});
 
-  var id = req.query.id || user.userId;
+router.get("/", function(req, res) {
+  getUser(req, res);
+});
+
+var getUser = function(req, res) {
+  var user = req.user.name;
+  // console.log(req.user);
+  // console.log(user);
+  var id = req.params.id || user.userId;
+
+  if (id === undefined) {
+    res.json({
+      error: "id is undefined"
+    });
+    return;
+  }
 
   sqlHelper.query(`
     SELECT *
     FROM gp_user
     WHERE id=${id}
   `, "get user info").then(out => {
-    res.send(out[0]);
+  //   sqlHelper.query(`
+  //   SELECT gp_user.*, gp_link_family.familyId AS linkFamilyId
+  //   FROM gp_user
+  //   INNER JOIN gp_link_family ON gp_user.id=gp_link_family.userId
+  //   WHERE gp_user.id=${id}
+  // `, "get user info").then(out => {
+
+    if (out.length > 0) {
+      res.json({
+        data: out[0]
+      });
+    } else {
+      res.json({
+        error: "用户不存在。"
+      });
+    }
   });
-});
+}
 
 module.exports = router;

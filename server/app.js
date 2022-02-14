@@ -113,6 +113,10 @@ api.all('/test', function(req, res) {
     res.send("abcdefg");
 });
 
+var setToken = function(res, token) {
+    res.cookie("token", "Bearer " + token, {maxAge: 60 * 1000, httpOnly: true});
+}
+
 /**
  * @api {post} /api/register 用户注册
  * @apiGroup User
@@ -127,7 +131,19 @@ api.post('/register_password', function(req, res) {
     sqlHelper.query(`CALL register_password('${username}', '${password}', @result)`).then(out => {
         console.log({out});
         var result = out[0][0];
-        res.json({userId: result.out_result});
+        var user = {
+            id: result.out_result,
+            name: username
+        };
+
+        vertoken.setToken(user).then((data)=>{
+            setToken(res, data);
+            // res.cookie("token", "Bearer " + data);
+            res.json({
+                data: user,
+                token: data
+            });
+        });
     });
 });
 
@@ -159,14 +175,12 @@ api.post('/login_password', function(req, res) {
             `);
 
             sqlHelper.setUserId(result.out_result);
-            // //生成token
+            //生成token
             vertoken.setToken({
                 userId: result.out_result,
                 name: username
-            }, 0, {
-                expiresIn: 60 * 60 * 24 // 授权时效24小时
             }).then((data)=>{
-                res.cookie("token", "Bearer " + data, {maxAge: 60 * 1000, httpOnly: true});
+                setToken(res, data);
                 // res.cookie("token", "Bearer " + data);
                 res.json({
                     data: info[0],
