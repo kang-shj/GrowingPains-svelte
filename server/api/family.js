@@ -46,6 +46,24 @@ router.post("/create", function(req, res) {
 });
 
 /**
+ * @api {get} /api/family/get_roles 获取角色
+ * @apiGroup Family
+ * @apiSuccess {Object[]} roles 角色列表
+ * @apiSuccess {Number} roles.id 角色Id
+ * @apiSuccess {String} roles.name 角色名称
+ */
+router.get("/get_roles", function(req, res) {
+  sqlHelper.query(`
+    SELECT *
+    FROM gp_role
+  `, "get_roles").then(out => {
+    res.json({
+      data: out
+    });
+  });
+});
+
+/**
  * @api {post} /api/family/add_member 添加家庭成员
  * @apiGroup Family
  * @apiUse apiParam_family
@@ -56,8 +74,6 @@ router.post("/create", function(req, res) {
  * @apiSuccess {Number} memberId 成员Id
  */
 router.post("/add_member", async function(req, res) {
-  // var user = req.user.name;
-
   var userId = req.body.userId;
   var userName = req.body.userName;
   var role = req.body.role;
@@ -99,7 +115,7 @@ router.post("/add_member", async function(req, res) {
   console.log({familyId});
   sqlHelper.query(`
     INSERT INTO gp_member (familyId, userId, roleId, mark)
-    VALUES (${familyId}, ${userId}, ${role[0].id}, '${mark}')
+    VALUES (${familyId}, ${userId[0].id}, ${role[0].id}, '${mark}')
   `, "add member").then(out => {
     return sqlHelper.query(`SELECT * FROM gp_member WHERE id=${out.insertId}`, "add member reject");
   }).then(out => {
@@ -110,9 +126,38 @@ router.post("/add_member", async function(req, res) {
 });
 
 /**
+ * @api {get} /api/family/get_member 获取用户所在家庭成员信息
+ * @apiGroup Family
+ * @apiParam {Number} [userId] 用户Id description
+ * @apiParam {Number} [familyId] 家庭Id
+ * @apiSuccess {Number} id 成员Id
+ * @apiSuccess {Number} familyId 家庭Id
+ * @apiSuccess {Number} roleId 角色Id
+ * @apiSuccess {String} roleName 角色
+ * @apiSuccess {String} mark 标记
+ */
+router.get("/get_member", function(req, res) {
+  var user = req.user.name;
+
+  var familyId = req.query.familyId;
+  var userId = req.query.userId || user.userId;
+
+  sqlHelper.query(`
+    SELECT gp_member.id, gp_family.id AS familyId, gp_role.id AS roleId, gp_role.name AS roleName, gp_member.mark AS mark
+    FROM gp_member
+    INNER JOIN gp_family ON gp_member.familyId=gp_family.id
+    INNER JOIN gp_role ON gp_member.roleId=gp_role.id
+    WHERE gp_member.familyId=${familyId} AND gp_member.userId=${userId}
+  `, "get member").then(out => {
+    res.send({data: out[0]});
+  });
+});
+
+/**
  * @api {get} /api/family/get_members 获取家庭成员
  * @apiGroup Family
  * @apiUse apiParam_family
+ * @apiParams {Number} roleId 角色Id
  * @apiSuccess {Object[]} members 家庭成员列表
  * @apiSuccess {Number} members.memberId 成员Id
  * @apiSuccess {Number} members.userId 用户Id
@@ -120,20 +165,27 @@ router.post("/add_member", async function(req, res) {
  * @apiSuccess {String} members.role 角色
  * @apiSuccess {String} members.mark 标记
  */
-router.get("/get_members", function(req, res) {
-  var familyId = queryFamilyId(req.params.familyId, req.params.familyName, "get members");
+router.get("/get_members", async function(req, res) {
+  var familyId = await queryFamilyId(req.query.familyId, req.query.familyName, "get members");
   if (familyId < 0) {
     res.send({error: ""});
     return;
   }
 
-  sqlHelper.query(`
+  var sql = `
     SELECT gp_member.id, gp_member.userId, gp_user.name AS userName, gp_role.name AS role, gp_member.mark
     FROM gp_member
     INNER JOIN gp_user ON gp_member.userId=gp_user.id
     INNER JOIN gp_role ON gp_member.roleId=gp_role.id
     WHERE gp_member.familyId=${familyId}
-  `).then(out => {
+  `;
+
+  var roleId = req.query.roleId;
+  if (roleId && roleId > 0) {
+    sql = sql + ` AND gp_member.roleId=${roleId}`;
+  }
+
+  sqlHelper.query(sql, "get members").then(out => {
     res.send({data: out});
   });
 });
@@ -214,7 +266,16 @@ router.get("/get_rules", function(req, res) {
  * @apiSuccess {String}   data.name     家庭名称
  */
 router.get("/:id", function(req, res) {
-  var id = req.params.id;
+  getFamily(req, res);
+});
+
+router.get("/", function(req, res) {
+  getFamily(req, res);
+});
+
+var getFamily = function(req, res) {
+  var user = req.user.name;
+  var id = req.params.id || user.userId;
 
   if (id === undefined) {
     res.json({
@@ -238,6 +299,6 @@ router.get("/:id", function(req, res) {
       });
     }
   });
-});
+}
 
 module.exports = router;

@@ -5,7 +5,7 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 22000;
 
 app.use(cors());
 
@@ -209,8 +209,31 @@ app.use('*', (req, res) => {
 });
 /* End web client */
 
-app.listen(port, () => {
+// app.listen(port, () => {
+//     console.log(`Server is up at port ${port}`);
+// });
+
+const server = app.listen(port);
+server.on('listening', () => {
     console.log(`Server is up at port ${port}`);
 });
 
+const duration = 2000; // 重试间隔
+var left = 100;
+server.on('error', (error) => {
+    if (error.code !== 'EADDRINUSE') { // 系统非监听端口操作报错
+        throw error;
+    }
 
+    left = left - 1;
+    // if (showErrMsg) {
+    //     console.log(`port ${port} already in use`)
+    //     showErrMsg = false
+    // }
+    console.log(`trying to restart the service on port ${port}... attempts left ${left} `);
+    if (left !== 0) {
+        setTimeout(() => server.listen(port), duration);
+    } else {
+        console.log('Server is shutting down');
+    }
+})

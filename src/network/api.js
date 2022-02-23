@@ -17,6 +17,7 @@ export default {
       }).catch(error => {
         // TODO: show error dialog
         console.log("TODO: show error dialog");
+        reject(error);
       });
     });
   },
@@ -30,8 +31,8 @@ export default {
 
   login: function(username, password) {
     return this.do(comm.post("/api/login_password", {
-      username: "kangsj",
-      password: "123456"
+      username: username,
+      password: password
     }));
   },
   
@@ -50,11 +51,11 @@ export default {
   },
 
   getFamilys: function() {
-    return this.do(comm.get("/api/user/familys", null));
+    return this.do(comm.get("/api/user/familys"));
   },
 
   getFamily: function(familyId) {
-    return this.do(comm.get(`/api/family/${familyId}`, null));
+    return this.do(comm.get(`/api/family/${familyId || ""}`, null));
   },
 
   createFamily: function(familyName) {
@@ -63,12 +64,41 @@ export default {
     }));
   },
 
-  addFamilyMember: function(familyId, userId, role, mark) {
-    return this.do(comm.post("/api/family/add_member", {
-      familyId: familyId,
-      userId: userId,
+  getRoles: function() {
+    return this.do(comm.get("/api/family/get_roles"));
+  },
+
+  addFamilyMember: function(family, user, role, mark) {
+    let params = {
       role: role,
       mark: mark
+    };
+
+    params = Object.assign(params, typeof family === "number" ? {
+      familyId: family
+    } : {
+      familyName: family.toString()
+    });
+
+    params = Object.assign(params, typeof user === "number" ? {
+      userId: user
+    } : {
+      userName: user.toString()
+    });
+
+    return this.do(comm.post("/api/family/add_member", params));
+  },
+
+  getFamilyMember: function(familyId) {
+    return this.do(comm.get("/api/family/get_member", {
+      familyId: familyId
+    }));
+  },
+
+  getFamilyMembers: function(familyId, roleId = 0) {
+    return this.do(comm.get("/api/family/get_members", {
+      familyId: familyId,
+      roleId: roleId
     }));
   },
 

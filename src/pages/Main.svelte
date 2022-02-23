@@ -1,37 +1,48 @@
 <script>
 	import { onMount } from 'svelte'
-  import { link, push, replace } from "svelte-spa-router";
-	import { Button } from 'attractions';
+  import { replace } from "svelte-spa-router"
+	import { Button } from 'attractions'
 
-  import Menu from '../views/Menu.svelte';
-  import Home from "./Home.svelte";
+  import Menu from '../views/Menu.svelte'
+  import Home from "./Home.svelte"
 	import Rule from './Rule.svelte'
 	import User from './User.svelte'
 
-	import { user, family } from '../store'
+	import { user, family, member } from '../store'
 	import api from '../network/api'
+	
+  let tabs = ["主页", "规则", "用户"];
+	let curTab = tabs[0];
 
 	onMount(() => {
+		console.log(typeof 1);
 		let token = window.localStorage.getItem("token");
 		console.log({token});
-		if (token === null) {
-			replace("/login");
+		if (token === null || token.length <= 0) {
+			routerLogin();
 		} else {
 			api.setToken(token);
 			api.getUser().then(response => {
 				user.set(response);
-				return api.getFamilyLink();
-			}).then(response => {
-				console.log("link ", response);
-				return api.getFamily(response.familyId);
-			}).then(response => {
-				family.set(response);
+				api.getFamilyLink().then(response2 => {
+					if (response2) {
+						api.getFamily(response2.familyId).then(response3 => {
+							family.set(response3);
+						});
+						api.getFamilyMember(response2.familyId).then(response4 => {
+							member.set(response4);
+						});
+					}
+				});
+			}).catch(error => {
+				routerLogin();
 			});
 		}
   });
 
-  let tabs = ["主页", "规则", "用户"];
-	let curTab = tabs[0];
+	function routerLogin() {
+		replace("/login");
+	}
 
 	function onTabChange(value) {
 		curTab = value.detail.value;

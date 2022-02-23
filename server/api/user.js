@@ -12,6 +12,7 @@ const sqlHelper = require("../dao/sqlHelper");
  */
 router.get("/familys", function(req, res) {
   var user = req.user.name;
+  console.log({user});
 
   sqlHelper.query(`
     SELECT gp_family.id, gp_family.name, gp_role.name AS role, gp_member.mark

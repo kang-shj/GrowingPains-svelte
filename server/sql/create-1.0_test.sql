@@ -54,7 +54,7 @@ CREATE TABLE gp_role (
 INSERT INTO gp_role (name) VALUES ("child");
 INSERT INTO gp_role (name) VALUES ("parent");
 
-/* 家庭成员连接表 */
+/* 家庭成员表 */
 CREATE TABLE gp_member (
 	id INT UNSIGNED AUTO_INCREMENT NOT NULL,
 	familyId INT UNSIGNED NOT NULL,				/*家庭ID*/

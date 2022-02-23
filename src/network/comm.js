@@ -1,4 +1,4 @@
-const Host = "http://localhost:5000";
+const Host = "http://cooljie2000.oicp.net:22000";
 
 let token = "";
 
