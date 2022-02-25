@@ -77,7 +77,7 @@ router.get("/", function(req, res) {
 
 var getUser = function(req, res) {
   var user = req.user.name;
-  // console.log(req.user);
+  console.log(req.user);
   // console.log(user);
   var id = req.params.id || user.userId;
 

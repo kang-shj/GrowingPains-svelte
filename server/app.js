@@ -7,18 +7,23 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 22000;
 
-app.use(cors());
-
-/* token 设置与验证 */
 const bodyparser = require('body-parser');
 app.use(bodyparser.json()); // 使用bodyparder中间件，
 app.use(bodyparser.urlencoded({ extended: true }));
 
-const expressJwt = require('express-jwt');
-var vertoken = require('./token.js');
-
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
+
+/* mysql */
+const sqlHelper = require("./dao/sqlHelper");
+sqlHelper.init({
+    host: "cooljie2000.oicp.net",
+    port: "3306",
+    database: "growingpainslib_test",
+}, 'kangsj', 'kjy08191211');
+/* End mysql */
+
+app.use(cors());
 
 app.use(function(req, res, next) {
     console.log();
@@ -29,7 +34,12 @@ app.use(function(req, res, next) {
         console.log("    body  => ", req.body);
     }
     next();
-})
+});
+
+if (true) {
+/* token 设置与验证 */
+const expressJwt = require('express-jwt');
+var vertoken = require('./token.js');
 
 // 解析token获取用户信息
 app.use(function(req, res, next) {
@@ -91,18 +101,18 @@ app.use(function(err, req, res, next) {
         });
     }
 });
-
+} else {
+app.use(function(req, res, next) {
+    req.user = {
+        name: {
+            userId: 1,
+            name: "kangsj"
+        }
+    };
+    next();
+});
+}
 /* End token*/
-
-/* mysql */
-const sqlHelper = require("./dao/sqlHelper");
-const { VAR_STRING } = require('mysql/lib/protocol/constants/types');
-sqlHelper.init({
-    host: "cooljie2000.oicp.net",
-    port: "3306",
-    database: "growingpainslib_test",
-}, 'kangsj', 'kjy08191211');
-/* End mysql */
 
 /* api */
 
@@ -195,6 +205,7 @@ api.post('/login_password', function(req, res) {
 
 api.use('/user', require('./api/user.js'));
 api.use('/family', require('./api/family.js'));
+api.use('/scoring', require('./api/scoring.js'));
 
 /* End api */
 

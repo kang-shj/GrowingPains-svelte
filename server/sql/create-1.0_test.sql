@@ -1,6 +1,8 @@
+-- source create-1.0.sql
+
 DROP DATABASE IF EXISTS growingpainslib_test;
-CREATE DATABASE growingpainslib_test;
-USE growingpainslib_test;
+create database growingpainslib_test;
+use growingpainslib_test;
 
 /* 日志表 */
 CREATE TABLE gp_journal (
@@ -92,27 +94,18 @@ CREATE TABLE gp_plan (
 /* 计分表 */
 CREATE TABLE gp_scoring (
 	id INT UNSIGNED AUTO_INCREMENT NOT NULL,
-	userId INT UNSIGNED NOT NULL,					/*用户ID*/
+	memberId INT UNSIGNED NOT NULL,				/*成员ID*/
+	addTime DATETIME NOT NULL,						/*添加时间*/
+	operatorId INT UNSIGNED NOT NULL,			/*操作者用户ID*/
 	ruleId INT UNSIGNED NOT NULL,					/*规则ID*/
-	scoring INT NOT NULL,									/*规则后分数*/
+	score INT NOT NULL,									  /*规则后得分*/
 	prevId INT UNSIGNED NOT NULL,					/*上一计分ID*/
 	nextId INT UNSIGNED NOT NULL,					/*下一计分ID*/
-	FOREIGN KEY (userId) REFERENCES gp_user(id),
-	FOREIGN KEY (ruleId) REFERENCES gp_rule(id),
-	FOREIGN KEY (prevId) REFERENCES gp_scoring(id),
-	FOREIGN KEY (nextId) REFERENCES gp_scoring(id),
-	PRIMARY KEY(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-/* 成员计分连接表 */
-CREATE TABLE gp_scoring_member (
-	id INT UNSIGNED AUTO_INCREMENT NOT NULL,
-	memberId INT UNSIGNED NOT NULL,							/*成员ID*/
-	scoringBeginId INT UNSIGNED NOT NULL,				/*计分开始ID*/
-	scoringEndId INT UNSIGNED NOT NULL,					/*计分结束ID*/
 	FOREIGN KEY (memberId) REFERENCES gp_member(id),
-	FOREIGN KEY (scoringBeginId) REFERENCES gp_scoring(id),
-	FOREIGN KEY (scoringEndId) REFERENCES gp_scoring(id),
+	FOREIGN KEY (operatorId) REFERENCES gp_user(id),
+	FOREIGN KEY (ruleId) REFERENCES gp_rule(id),
+	-- FOREIGN KEY (prevId) REFERENCES gp_scoring(id),
+	-- FOREIGN KEY (nextId) REFERENCES gp_scoring(id),
 	PRIMARY KEY(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -185,7 +178,7 @@ BEGIN
 	SELECT id FROM gp_link_family WHERE userId=in_userId INTO out_result;
 
 	IF out_result > 0 THEN
-		UPDATE gp_link_family WHERE userId=in_userId SET familyId=in_familyId;
+		UPDATE gp_link_family SET familyId=in_familyId WHERE userId=in_userId;
 	ELSE
 		INSERT INTO gp_link_family (userId, familyId) VALUES (in_userId, in_familyId);
 	END

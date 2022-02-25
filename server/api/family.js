@@ -157,7 +157,7 @@ router.get("/get_member", function(req, res) {
  * @api {get} /api/family/get_members 获取家庭成员
  * @apiGroup Family
  * @apiUse apiParam_family
- * @apiParams {Number} roleId 角色Id
+ * @apiParam {Number} roleId 角色Id
  * @apiSuccess {Object[]} members 家庭成员列表
  * @apiSuccess {Number} members.memberId 成员Id
  * @apiSuccess {Number} members.userId 用户Id
@@ -254,7 +254,7 @@ router.get("/get_rules", async function(req, res) {
  * @apiSuccess {String} members.description 规则描述
  * @apiSuccess {Number} members.scoring 规则分数
  */
-router.get("/get_rules", function(req, res) {
+router.get("/delete_rules", function(req, res) {
   
 });
 
