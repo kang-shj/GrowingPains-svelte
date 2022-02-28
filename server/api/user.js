@@ -19,7 +19,7 @@ router.get("/familys", function(req, res) {
     FROM gp_member
     INNER JOIN gp_family ON gp_member.familyId=gp_family.id
     INNER JOIN gp_role ON gp_member.roleId=gp_role.id
-    WHERE userId=${user.userId}
+    WHERE userId=${user.id}
   `, "get user familys").then(out => {
     res.send({data: out});
   });
@@ -35,7 +35,7 @@ router.get("/family_link", function(req, res) {
   sqlHelper.query(`
     SELECT *
     FROM gp_link_family
-    WHERE userId=${user.userId}
+    WHERE userId=${user.id}
   `, "get user family link").then(out => {
     res.json({
       data: out[0]
@@ -47,9 +47,9 @@ router.post("/link_family", function(req, res) {
   var user = req.user.name;
   // sqlHelper.query(`
   //   INSERT INTO gp_link_family (userId, familyId)
-  //   VALUES (${user.userId}, ${req.body.familyId})
+  //   VALUES (${user.id}, ${req.body.familyId})
   // `, "link family").then(out => {
-  sqlHelper.query(`CALL link_family(${user.userId}, ${req.body.familyId}, @result)`).then(out => {
+  sqlHelper.query(`CALL link_family(${user.id}, ${req.body.familyId}, @result)`).then(out => {
     var result = out[0][0];
     // console.log({result});
     return sqlHelper.query(`SELECT * FROM gp_link_family WHERE id=${result.out_result}`, "link family reject");
@@ -77,9 +77,7 @@ router.get("/", function(req, res) {
 
 var getUser = function(req, res) {
   var user = req.user.name;
-  console.log(req.user);
-  // console.log(user);
-  var id = req.params.id || user.userId;
+  var id = req.params.id || user.id;
 
   if (id === undefined) {
     res.json({

@@ -5,7 +5,7 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const port = process.env.PORT || 22000;
+const port = process.env.PORT || 12000;
 
 const bodyparser = require('body-parser');
 app.use(bodyparser.json()); // 使用bodyparder中间件，
@@ -19,7 +19,7 @@ const sqlHelper = require("./dao/sqlHelper");
 sqlHelper.init({
     host: "cooljie2000.oicp.net",
     port: "3306",
-    database: "growingpainslib_test",
+    database: "growingpainslib",
 }, 'kangsj', 'kjy08191211');
 /* End mysql */
 
@@ -28,10 +28,14 @@ app.use(cors());
 app.use(function(req, res, next) {
     console.log();
     console.log(`[${req.method}] -- ${req.url}`);
+    console.log("    params => ", req.query);
+
     if (req.method === "GET") {
-        console.log("    query => ", req.query);
+        console.log("    query  => ", req.query);
+        // req.params = req.query;
     } else {
-        console.log("    body  => ", req.body);
+        console.log("    body   => ", req.body);
+        // req.params = req.body;
     }
     next();
 });
@@ -105,7 +109,7 @@ app.use(function(err, req, res, next) {
 app.use(function(req, res, next) {
     req.user = {
         name: {
-            userId: 1,
+            id: 1,
             name: "kangsj"
         }
     };
@@ -187,7 +191,7 @@ api.post('/login_password', function(req, res) {
             sqlHelper.setUserId(result.out_result);
             //生成token
             vertoken.setToken({
-                userId: result.out_result,
+                id: result.out_result,
                 name: username
             }).then((data)=>{
                 setToken(res, data);

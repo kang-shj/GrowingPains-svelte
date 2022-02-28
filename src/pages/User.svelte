@@ -17,8 +17,8 @@
 	import api from '../network/api'
 
   let loginUser = {
-    username: "kangsj",
-    password: "123456"
+    username: "",
+    password: ""
   };
 
   let familyLink = 7;
@@ -92,6 +92,9 @@
   function linkFamily(family_) {
     api.linkFamily(family_.id).then(response => {
       family.set(family_);
+      api.getFamilyMember(family_.id).then(response2 => {
+        member.set(response2);
+      });
     });
   }
 

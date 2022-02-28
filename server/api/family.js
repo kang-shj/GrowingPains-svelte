@@ -140,7 +140,7 @@ router.get("/get_member", function(req, res) {
   var user = req.user.name;
 
   var familyId = req.query.familyId;
-  var userId = req.query.userId || user.userId;
+  var userId = req.query.userId || user.id;
 
   sqlHelper.query(`
     SELECT gp_member.id, gp_family.id AS familyId, gp_role.id AS roleId, gp_role.name AS roleName, gp_member.mark AS mark
@@ -237,7 +237,7 @@ router.get("/get_rules", async function(req, res) {
   }
 
   sqlHelper.query(`
-    SELECT description, scoring
+    SELECT id, description, scoring
     FROM gp_rule
     WHERE familyId=${familyId}
   `).then(out => {
@@ -275,7 +275,7 @@ router.get("/", function(req, res) {
 
 var getFamily = function(req, res) {
   var user = req.user.name;
-  var id = req.params.id || user.userId;
+  var id = req.params.id || user.id;
 
   if (id === undefined) {
     res.json({

@@ -8,6 +8,7 @@
     TextField
   } from 'attractions'
   import api from "../network/api"
+import { family, member } from '../store';
 
   let rules = [];
   let openAddRule = false;
@@ -17,10 +18,8 @@
   };
 
   onMount(() => {
-    api.getRules(1).then(response => {
-      if (response) {
-        rules = response;
-      }
+    api.getRules($family.id).then(response => {
+      rules = response;
     });
   });
 
@@ -43,11 +42,15 @@
 </script>
 
 <main>
+  {#if $member.roleId === 2}
+    <Button filled rectangle small on:click={onOpenDialog}>添加规则</Button>
+  {/if}
+
   <Table headers={[
-    {text: '', value: 'description'},
-    {text: '', value: 'scoring'},
+    {text: '规则', value: 'description'},
+    {text: '计分', value: 'scoring'},
   ]} bind:items={rules} />
-  <Button filled rectangle small on:click={onOpenDialog}>添加规则</Button>
+
   <Modal bind:open={openAddRule}>
     <Dialog title="添加规则">
       规则

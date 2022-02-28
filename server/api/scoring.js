@@ -21,21 +21,21 @@ router.post("/add_scoring", async function(req, res) {
   var ruleScoring = ruleSet[0].scoring;
 
   var scoringSet = await sqlHelper.query(`
-    SELECT id, scoring
+    SELECT id, score
     FROM gp_scoring
     WHERE memberId=${memberId} AND nextId=0
   `);
   var lastId = 0;
-  var scoring = 0;
+  var score = 0;
   if (scoringSet.length > 0) {
     lastId = scoringSet[0].id;
-    scoring = scoringSet[0].scoring;
+    score = scoringSet[0].score;
   }
 
   var now = new Date();
   var insertOut = await sqlHelper.query(`
-    INSERT INTO gp_scoring (memberId, addTime, operatorId, ruleId, scoring, prevId, nextId)
-    VALUES (${memberId}, '${now.toLocaleDateString()} ${now.toTimeString().substr(0, 8)}', ${user.userId}, ${ruleId}, ${scoring + ruleScoring}, ${lastId}, 0);
+    INSERT INTO gp_scoring (memberId, addTime, operatorId, ruleId, score, prevId, nextId)
+    VALUES (${memberId}, '${now.toLocaleDateString()} ${now.toTimeString().substr(0, 8)}', ${user.id}, ${ruleId}, ${score + ruleScoring}, ${lastId}, 0);
   `);
   var newScoringId = insertOut.insertId;
 
@@ -55,23 +55,48 @@ router.post("/add_scoring", async function(req, res) {
 });
 
 /**
- * @api {get} /api/scoring/get_scoring 获取当前分数
+ * @api {get} /api/scoring/get_score 获取当前分数
  * @apiGroup Scoring
+ * @apiParam {Number} [familyId] 家庭id
+ * @apiSuccess {Object[]} [scores] 家庭所有child成员分数
+ * @apiSuccess {String} [scores.name] 成员名称
+ * @apiSuccess {Number} [scores.score] 成员当前得分
  * @apiParam {Number} [memberId] 成员id
- * @apiSuccess {Number} [scoring] 当前分数
+ * @apiSuccess {Number} [score] 当前得分
  */
-router.get("/get_scoring", async function(req, res) {
+router.get("/get_score", async function(req, res) {
+  var familyId = req.query.familyId;
   var memberId = req.query.memberId;
 
-  sqlHelper.query(`
-    SELECT scoring
-    FROM gp_scoring
-    WHERE memberId=${memberId} AND nextId=0
-  `).then(outSet => {
-    res.json({
-      data: outSet[0]
+  if (familyId !== undefined) {
+    sqlHelper.query(`
+      SELECT m.id AS memberId, u.name AS name, m.mark AS mark, s.score AS score
+      FROM gp_scoring s
+      LEFT JOIN gp_member m
+      ON m.familyId=${familyId} AND roleId=1
+      LEFT JOIN gp_user u
+      ON u.id=m.userId
+      WHERE s.memberId=m.id AND s.nextId=0
+    `).then(outSet => {
+      res.json({
+        data: outSet
+      });
     });
-  });
+  } else if (memberId !== undefined) {
+    sqlHelper.query(`
+      SELECT score
+      FROM gp_scoring
+      WHERE memberId=${memberId} AND nextId=0
+    `).then(outSet => {
+      res.json({
+        data: outSet[0]
+      });
+    });
+  } else {
+    res.json({
+      error: "no data"
+    });
+  }
 
 });
 
@@ -95,6 +120,7 @@ router.get("/get_scorings", async function(req, res) {
     LEFT JOIN gp_user ON gp_user.id=gp_scoring.operatorId
     LEFT JOIN gp_rule ON gp_rule.id=gp_scoring.ruleId
     WHERE gp_scoring.memberId=${memberId}
+    ORDER BY gp_scoring.id DESC
   `).then(outSet => {
     res.json({
       data: outSet

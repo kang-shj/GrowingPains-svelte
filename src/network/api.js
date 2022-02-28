@@ -116,4 +116,28 @@ export default {
     }));
   },
 
+  addScoring: function(memberId, ruleId) {
+    return this.do(comm.post("/api/scoring/add_scoring", {
+      memberId: memberId,
+      ruleId: ruleId
+    }));
+  },
+
+  getFamilyScores: function(familyId) {
+    return this.do(comm.get("/api/scoring/get_score", {
+      familyId: familyId
+    }));
+  },
+
+  getScore: function(memberId) {
+    return this.do(comm.get("/api/scoring/get_score", {
+      memberId: memberId
+    }));
+  },
+
+  getScorings: function(memberId) {
+    return this.do(comm.get("/api/scoring/get_scorings", {
+      memberId: memberId
+    }));
+  },
 }

@@ -1,7 +1,6 @@
 <script>
 	import { onMount } from 'svelte'
   import { replace } from "svelte-spa-router"
-	import { Button } from 'attractions'
 
   import Menu from '../views/Menu.svelte'
   import Home from "./Home.svelte"
