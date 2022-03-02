@@ -42,7 +42,9 @@
 
   function getScore(memberId) {
     api.getScore(memberId).then(response => {
-      score = response.score;
+      if (response) {
+        score = response.score;
+      }
     });
   };
 
@@ -53,7 +55,7 @@
   };
 
   function transformTime(isoTime) {
-    var t = new Date("2012-12-06T04:19:27+00:00");
+    var t = new Date(isoTime);
     return `${t.toLocaleDateString()} ${t.toTimeString().substr(0, 8)}`;
   };
 
@@ -68,6 +70,7 @@
   function appendRule() {
     api.addScoring(curMemberId, addRule.id).then(response => {
       getScorings(curMemberId);
+      addRule = undefined
     });
   };
 
@@ -92,6 +95,8 @@
               getScore(curMemberId);
               getScorings(curMemberId);
             }} />
+          {:else if header.value === "score" && item[header.value] === null}
+            0
           {:else}
             {item[header.value]}
           {/if}
@@ -102,30 +107,30 @@
       <h1>{$member.roleName}</h1>
     {/if}
 
-    {#if scorings.length > 0}
-      {#if $member.roleId === 2}
-        <div style="display: flex; align-items: center;">
-          添加计分：
-          <DropdownButton hint="点击选择规则" items={rules.map(rule => `${rule.description}  ${rule.scoring}`)} on:select={selectRule}>
-          </DropdownButton>
-          <!-- <DropdownShell let:toggle>
-            <Button on:click={toggle}>
-              {#if addRule === undefined}
-                点击选择规则
-              {:else}
-                {makeRuleString(addRule)}
-              {/if}
-              <ChevronDownIcon size="24" class="ml dropdown-chevron" />
-            </Button>
-            <Dropdown>
-              {#each rules as rule}
-                <Button filled rectangle small on:click={() => addRule = rule}>{makeRuleString(rule)}</Button>
-              {/each}
-            </Dropdown>
-          </DropdownShell> -->
-          <Button filled rectangle small on:click={appendRule}>确定</Button>
-        </div>
-      {/if}
+    {#if $member.roleId === 2 && curMemberId > 0}
+      <div style="display: flex; align-items: center;">
+        添加计分：
+        <DropdownButton hint="点击选择规则" items={rules.map(rule => `${rule.description}  ${rule.scoring}`)} on:select={selectRule}>
+        </DropdownButton>
+        <!-- <DropdownShell let:toggle>
+          <Button on:click={toggle}>
+            {#if addRule === undefined}
+              点击选择规则
+            {:else}
+              {makeRuleString(addRule)}
+            {/if}
+            <ChevronDownIcon size="24" class="ml dropdown-chevron" />
+          </Button>
+          <Dropdown>
+            {#each rules as rule}
+              <Button filled rectangle small on:click={() => addRule = rule}>{makeRuleString(rule)}</Button>
+            {/each}
+          </Dropdown>
+        </DropdownShell> -->
+        <Button filled rectangle small on:click={appendRule}>确定</Button>
+      </div>
+    {/if}
+    {#if $member.roleId === 1 || ($member.roleId === 2 && curMemberId > 0)}
       <h1>总得分：{score}</h1>
       <Table headers={[
         {text: '时间', value: 'time'},

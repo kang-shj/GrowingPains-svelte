@@ -7,7 +7,7 @@ exports.setToken = function(username, userid) {
     const token = jwt.sign({
       name: username,
       id: userid
-    }, signkey, { expiresIn:'1h' });
+    }, signkey, { expiresIn:`${30 * 24}h` });
     resolve(token);
   });
 }

@@ -71,12 +71,12 @@ router.get("/get_score", async function(req, res) {
   if (familyId !== undefined) {
     sqlHelper.query(`
       SELECT m.id AS memberId, u.name AS name, m.mark AS mark, s.score AS score
-      FROM gp_scoring s
-      LEFT JOIN gp_member m
-      ON m.familyId=${familyId} AND roleId=1
+      FROM gp_member m
+      LEFT JOIN gp_scoring s
+      ON s.memberId=m.id AND s.nextId=0
       LEFT JOIN gp_user u
       ON u.id=m.userId
-      WHERE s.memberId=m.id AND s.nextId=0
+      WHERE m.familyId=${familyId} AND roleId=1
     `).then(outSet => {
       res.json({
         data: outSet

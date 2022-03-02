@@ -50,6 +50,8 @@
 <style>
   .dropdown-menu {
     margin: 20px 0;
+    max-height: 250px;
+    overflow-y: scroll;
   }
 
   .dropdown-item {

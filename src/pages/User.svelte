@@ -21,7 +21,7 @@
     password: ""
   };
 
-  let familyLink = 7;
+  let linkFamilyId = 0;
   let familys = [];
   let openCreateFamily = false;
   let newFamily = {
@@ -58,13 +58,8 @@
 
   function onRegister() {
     api.register(loginUser.username, loginUser.password).then(response => {
-      if (response.userId > 0) {
-        user.set({
-          id: response.userId,
-          name: loginUser.username
-        });
-        replace("/");
-      }
+      user.set(response);
+      replace("/");
     });
   }
 
@@ -92,6 +87,7 @@
   function linkFamily(family_) {
     api.linkFamily(family_.id).then(response => {
       family.set(family_);
+      linkFamilyId = family_.id;
       api.getFamilyMember(family_.id).then(response2 => {
         member.set(response2);
       });
@@ -99,13 +95,14 @@
   }
 
   function createFamily() {
-    var familyId;
     api.createFamily(newFamily.name).then(response => {
       openCreateFamily = false;
-      familyId = response.insertId;
-      return api.addFamilyMember(familyId, $user.id, "parent", newFamily.mark);
-    }).then(response => {
-      linkFamily(familyId);
+      return api.getFamily(response.insertId);
+    }).then(response2 => {
+      api.addFamilyMember(response2.id, $user.id, "parent", newFamily.mark).then(response3 => {
+        familys.push(response3);
+        linkFamily(response2);
+      });
     });
   }
 
@@ -153,9 +150,8 @@
       ]} items={familys}>
         <div slot="item" let:header={header} let:item={item}>
           {#if header.value === "id"}
-            <RadioButton name="familys" value={item.id} checked={item.id==7} on:change={(event) => {
+            <RadioButton name="familys" value={item.id} checked={item.id===linkFamilyId} on:change={(event) => {
               console.log({event});
-              familyLink = event.detail.value;
               linkFamily(item);
             }} />
           {:else}

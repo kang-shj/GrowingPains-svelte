@@ -5,7 +5,7 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const port = process.env.PORT || 12000;
+const port = process.env.PORT || 22000;
 
 const bodyparser = require('body-parser');
 app.use(bodyparser.json()); // 使用bodyparder中间件，
@@ -19,7 +19,7 @@ const sqlHelper = require("./dao/sqlHelper");
 sqlHelper.init({
     host: "cooljie2000.oicp.net",
     port: "3306",
-    database: "growingpainslib",
+    database: "growingpainslib_test",
 }, 'kangsj', 'kjy08191211');
 /* End mysql */
 

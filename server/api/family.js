@@ -99,25 +99,40 @@ router.post("/add_member", async function(req, res) {
   }
 
   if (userId == undefined) {
-    userId = await sqlHelper.query(`
+    var userSet = await sqlHelper.query(`
       SELECT id
       FROM gp_user
       WHERE name='${userName}'
     `, "add member find user id");
+    userId = userSet[0].id;
   }
 
-  var role = await sqlHelper.query(`
+  var roleSet = await sqlHelper.query(`
     SELECT id
     FROM gp_role
     WHERE name='${role}'
   `, "add member find role id");
 
+  var roleId = 0;
+  if (roleSet.length > 0) {
+    roleId = roleSet[0].id;
+  }
+
   console.log({familyId});
+  console.log({userId});
+  console.log({roleId});
+
   sqlHelper.query(`
     INSERT INTO gp_member (familyId, userId, roleId, mark)
-    VALUES (${familyId}, ${userId[0].id}, ${role[0].id}, '${mark}')
+    VALUES (${familyId}, ${userId}, ${roleId}, '${mark}')
   `, "add member").then(out => {
-    return sqlHelper.query(`SELECT * FROM gp_member WHERE id=${out.insertId}`, "add member reject");
+    return sqlHelper.query(`
+      SELECT gp_member.id AS id, gp_family.name AS name, gp_role.name AS role, gp_member.mark AS mark
+      FROM gp_member
+      LEFT JOIN gp_family ON gp_member.familyId=gp_family.id
+      LEFT JOIN gp_role ON gp_member.roleId=gp_role.id
+      WHERE gp_member.id=${out.insertId}
+    `, "add member reject");
   }).then(out => {
     res.send({
       data: out[0]

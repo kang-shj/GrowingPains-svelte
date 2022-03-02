@@ -13,7 +13,15 @@ export default {
           window.localStorage.setItem("token", response.token);
           this.setToken(response.token);
         }
-        resolve(response.data);
+        if (response.data) {
+          resolve(response.data);
+        } else {
+          var error = "未知错误";
+          if (response.error) {
+            error = response.error;
+          }
+          reject(response.error)
+        }
       }).catch(error => {
         // TODO: show error dialog
         console.log("TODO: show error dialog");
@@ -47,7 +55,7 @@ export default {
   },
 
   getFamilyLink: function() {
-    return this.do(comm.get("/api/user/family_link", null));
+    return this.do(comm.get("/api/user/family_link"));
   },
 
   getFamilys: function() {

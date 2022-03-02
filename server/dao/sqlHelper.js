@@ -37,11 +37,11 @@ function query(sql, notes) {
           });
 
           // 日志
-          // try {
-          //   journal(connection, userId, sql, notes || "");
-          // } catch(e) {
-          //   console.log({e});
-          // }
+          try {
+            journal(connection, userId, sql, notes || "");
+          } catch(e) {
+            console.log({e});
+          }
         }
       });
     } else {
@@ -57,7 +57,7 @@ async function journal(connection, userId, sql, notes = "") {
   }
   var doJournal = function() {
     return new Promise((resolve, reject) => {
-      var sql_ = sql.replace(/\'/g, "''");
+      var sql_ = sql.replace(/\'/g, "''").replace(/\n/g, "");
       connection.query(`CALL addjournal(${userId}, '${sql_}', '${notes}');`, (err) => {
         if (err) {
           console.log({err});

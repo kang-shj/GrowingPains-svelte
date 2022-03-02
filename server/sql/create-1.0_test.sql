@@ -9,7 +9,7 @@ CREATE TABLE gp_journal (
 	id INT UNSIGNED AUTO_INCREMENT NOT NULL,
 	time DATETIME NOT NULL,						/*时间*/
 	userId INT UNSIGNED,						/*用户ID*/
-	sql_ VARCHAR(100) NOT NULL,					/*sql语句*/
+	sql_ VARCHAR(1024) NOT NULL,					/*sql语句*/
 	notes VARCHAR(60),							/*注释*/
 	PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -112,7 +112,7 @@ CREATE TABLE gp_scoring (
 -- 添加日志
 CREATE PROCEDURE addjournal(
 	IN in_userId INT,
-	IN in_sql VARCHAR(100),
+	IN in_sql VARCHAR(1024),
 	IN in_notes VARCHAR(60)
 )
 BEGIN
@@ -181,7 +181,7 @@ BEGIN
 		UPDATE gp_link_family SET familyId=in_familyId WHERE userId=in_userId;
 	ELSE
 		INSERT INTO gp_link_family (userId, familyId) VALUES (in_userId, in_familyId);
-	END
+	END IF;
 
 	SELECT out_result;
 END;
