@@ -11,6 +11,7 @@
     Divider,
     Dropdown,
     DropdownShell,
+    Loading,
   } from 'attractions'
   import { ChevronDownIcon } from 'svelte-feather-icons'
 	import { user, family, member } from '../store'
@@ -56,17 +57,37 @@
     familysubscribe();
   });
 
-  function onRegister() {
-    api.register(loginUser.username, loginUser.password).then(response => {
-      user.set(response);
+  let registerUser;
+  let waitRegister = false;
+  function register() {
+    waitRegister = true;
+    api.register(loginUser.username, loginUser.password).then(async response => {
+      registerUser = response;
+      if ($user === undefined) {
+        openCreateFamily = true;
+        await new Promise((resolve) => {
+          var timer = setInterval(() => {
+            if (!openCreateFamily) {
+              clearInterval(timer);
+              resolve();
+            }
+          }, 500);
+        });
+      }
+      registerUser = undefined;
+      // user.set(response);
       replace("/");
+      waitRegister = false;
     });
   }
 
+  let waitLogin = false;
   function login() {
+    waitLogin = true;
     api.login(loginUser.username, loginUser.password).then(async response => {
       // user.set(response);
       replace("/");
+      waitLogin = false;
     });
   }
 
@@ -75,6 +96,7 @@
     family.set(undefined);
     member.set(undefined);
     window.localStorage.setItem("token", "");
+    api.setToken("");
     replace("/login");
   }
 
@@ -94,14 +116,20 @@
     });
   }
 
+  let waitCreateFamily = false;
   function createFamily() {
+    waitCreateFamily = true;
     api.createFamily(newFamily.name).then(response => {
-      openCreateFamily = false;
       return api.getFamily(response.insertId);
     }).then(response2 => {
-      api.addFamilyMember(response2.id, $user.id, "parent", newFamily.mark).then(response3 => {
-        familys.push(response3);
+      var userId = $user !== undefined ? $user.id : registerUser.id;
+      api.addFamilyMember(response2.id, userId, "parent", newFamily.mark).then(response3 => {
+        if ($user !== undefined) {
+          familys.push(response3);
+        }
         linkFamily(response2);
+        openCreateFamily = false;
+        waitCreateFamily = false;
       });
     });
   }
@@ -113,6 +141,7 @@
     });
   }
 
+  let waitAddMember = false;
   function addMember() {
     api.addFamilyMember($family.id, newMember.userName, newMember.role, newMember.mark).then(response => {
       console.log({response});
@@ -126,13 +155,15 @@
   <input type="radio" name="killOrder" value="1"/>
   <input type="radio" name="killOrder" value="0" checked/> -->
   {#if $user === undefined}
+    <div></div>
     用户名
     <TextField bind:value={loginUser.username}/>
     密码
     <TextField bind:value={loginUser.password} type="password"/>
     <div class="app-line">
-      <Button filled on:click={onRegister}>注册</Button>
-      <Button filled on:click={login}>登录</Button>
+      <Button filled disabled={waitLogin || waitRegister} on:click={login}>登录</Button>
+      <div style="margin: 0 16px">或</div>
+      <Button filled disabled={waitLogin || waitRegister} on:click={register}>注册</Button>
     </div>
   {:else}
     <h1>{$user.name}</h1>
@@ -181,16 +212,6 @@
 
   {/if}
 
-  <Modal bind:open={openCreateFamily}>
-    <Dialog title="创建家庭">
-      名称
-      <TextField bind:value={newFamily.name}/>
-      身份标记
-      <TextField bind:value={newFamily.mark}/>
-      <Button filled rectangle small on:click={createFamily}>创建</Button>
-    </Dialog>
-  </Modal>
-
   <Modal bind:open={openAddMember}>
     <Dialog title="添加成员">
       名称
@@ -213,8 +234,32 @@
       </DropdownShell>
       身份标记
       <TextField bind:value={newMember.mark}/>
-      <Button filled rectangle small on:click={addMember}>添加</Button>
+      <Button filled rectangle small disabled={waitAddMember} on:click={addMember}>添加</Button>
     </Dialog>
+  </Modal>
+
+  <Modal open={(waitRegister || waitLogin)} noClickaway={true}>
+    <Loading />
+  </Modal>
+
+  <Modal bind:open={openCreateFamily} noClickaway={$user === undefined}>
+    <Dialog title="创建家庭">
+      名称
+      <TextField bind:value={newFamily.name}/>
+      身份标记
+      <TextField bind:value={newFamily.mark}/>
+      <div>
+        {#if $user === undefined}
+        <Button filled rectangle small disabled={waitCreateFamily} on:click={() => openCreateFamily = false}>跳过</Button>
+        {/if}
+        <Button filled rectangle small disabled={waitCreateFamily} on:click={createFamily}>创建</Button>
+      </div>
+    </Dialog>
+  </Modal>
+
+  
+  <Modal open={waitCreateFamily} noClickaway={true}>
+    <Loading />
   </Modal>
 
 </main>
@@ -228,5 +273,6 @@
 
 .app-line {
   display: flex;
+  align-items: center;
 }
 </style>

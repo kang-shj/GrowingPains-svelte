@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const sqlHelper = require("../dao/sqlHelper");
+const func = require("../func");
 
 var queryFamilyId = function(familyId, familyName, notes = "") {
   return new Promise(async (resolve, reject) => {
@@ -104,7 +105,20 @@ router.post("/add_member", async function(req, res) {
       FROM gp_user
       WHERE name='${userName}'
     `, "add member find user id");
-    userId = userSet[0].id;
+
+    if (userSet.length <= 0) {
+      if (func.AddMemberAutoCreateUser) {
+        var newUser = await sqlHelper.query(`
+          INSERT INTO gp_user (name)
+          VALUES ('${userName}');
+        `, "add member create user");
+        userId = newUser.insertId;
+      } else {
+        res.send({error: ""});
+      }
+    } else {
+      userId = userSet[0].id;
+    }
   }
 
   var roleSet = await sqlHelper.query(`
@@ -234,6 +248,18 @@ router.post("/add_rule", async function(req, res) {
     res.send({data: out});
   });
 
+});
+
+/**
+ * @api {post} /api/family/update_rule/:id 添加规则
+ * @apiGroup Family
+ * @appParam {Number} id 规则Id
+ * @apiParam {String} description 规则描述
+ * @apiParam {Number} scoring 规则分数
+ * @apiParam {String} remarks 备注
+ */
+router.post("/update_rule", async function(req, res) {
+  
 });
 
 /**

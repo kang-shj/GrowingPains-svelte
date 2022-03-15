@@ -1,0 +1,1 @@
+exports.AddMemberAutoCreateUser = true;  // 添加成员若成员不存在，则自动创建成员
