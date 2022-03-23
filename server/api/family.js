@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const { query, response } = require('express');
 const sqlHelper = require("../dao/sqlHelper");
 const func = require("../func");
 
@@ -251,24 +252,143 @@ router.post("/add_rule", async function(req, res) {
 });
 
 /**
- * @api {post} /api/family/update_rule/:id 添加规则
+ * @api {post} /api/family/update_rule/:id 更改规则
  * @apiGroup Family
  * @appParam {Number} id 规则Id
  * @apiParam {String} description 规则描述
  * @apiParam {Number} scoring 规则分数
  * @apiParam {String} remarks 备注
  */
-router.post("/update_rule", async function(req, res) {
-  
+router.post("/update_rule", (req, res) => {
+  this.updateRule(Object.assign(
+    req.body,
+    req.params
+  ), "update rule").then(response => {
+    res.json({
+      data: response
+    });
+  });
 });
+var updateRule = function(args, notes = "") {
+  return new Promise(async (resolve, reject) => {
+    if (args.id === undefined) {
+      reject({
+        error: ""
+      });
+    }
+  
+    var rule = await getRule(args.id, notes + " - query rule");
+    if (rule === undefined) {
+      reject({
+        error: ""
+      });
+    }
+  
+    var scoring = args.scoring;
+    var updateRuleId;
+    if (scoring !== undefined && scoring !== rule.scoring) {
+      await cancelRule(args.id, "cancel old rule");
+      var result =  await addRule({
+        familyId: rule.familyId,
+        description: args.description || rule.description,
+        scoring: rule.scoring,
+        remarks: args.remarks || rule.remarks
+      }, notes + " - add update rule");
+
+      updateRuleId = result.insertId;
+    } else {
+      var update = [];
+      if (args.description !== undefined) {
+        update.push(`description='${args.description}'`);
+      }
+      if (args.remarks !== undefined) {
+        update.push(`remarks='${args.remarks}'`);
+      }
+      await sqlHelper.query(`
+        UPDATE gp_rule
+        SET ${update.join(" ")}
+        WHERE id=${args.id}
+      `, notes + " - update rule");
+
+      updateRuleId = args.id;
+    }
+
+    getRule(updateRuleId, notes + " - get update rule").then(response => {
+      console.log(response);
+      resolve(response);
+    });
+  });
+}
+exports.updateRule = updateRule;
 
 /**
- * @api {get} /api/family/get_rules 获取规则
+ * @api {post} /api/family/cancel_rule/:id 取消规则
+ * @apiGroup Family
+ * @appParam {Number} id 规则Id
+ */
+router.post("/cancel_rule", async function (req, res) {
+  var ruleId = req.params.id || req.body.id;
+  await cancelRule(ruleId, "delete rule");
+  res.json({
+    data: "ok"
+  });
+});
+var cancelRule = function (ruleId, notes = "") {
+  return sqlHelper.query(`
+    UPDATE gp_rule
+    SET cancel=1
+    WHERE id=${ruleId}
+  `, notes + " - cancel rule");
+}
+exports.cancelRule = cancelRule;
+
+var addRule = function (args, notes = "") {
+  return new Promise((resolve, reject) => {
+    sqlHelper.query(`
+      INSERT INTO gp_rule (familyId, description, scoring, remarks, cancel)
+      VALUES (${args.familyId}, '${args.description}', ${args.scoring}, '${args.remarks}', 0)
+    `, notes + " - add rule").then(response => {
+      resolve(response);
+    });
+  });
+}
+
+/**
+ * @api {get} /api/family/rule/:id 获取规则
+ * @apiGroup Family
+ * @apiParams {Number} id 规则Id
+ * @apiSuccess {String} description 描述
+ * @apiSuccess {Number} scoring 分数
+ * @apiSuccess {String} remarks 备注
+ */
+router.get("/rule/:id", (req, res) => {
+  getRule(req.params.id).then(response => {
+    res.json({
+      data: response
+    });
+  });
+});
+var getRule = function(ruleId, notes) {
+  return new Promise((resolve, reject) => {
+    sqlHelper.query(`
+      SELECT *
+      FROM gp_rule
+      WHERE id=${ruleId}
+    `, notes || "get rule").then(response => {
+      resolve(response[0]);
+    });
+  });
+}
+exports.getRule = getRule;
+
+/**
+ * @api {get} /api/family/get_rules 获取家庭所有规则
  * @apiGroup Family
  * @apiUse apiParam_family
  * @apiSuccess {Object[]} rules 规则列表
- * @apiSuccess {String} members.description 规则描述
- * @apiSuccess {Number} members.scoring 规则分数
+ * @apiSuccess {String} rules.description 描述
+ * @apiSuccess {Number} rules.scoring 分数
+ * @apiSuccess {String} rules.remarks 备注
  */
 router.get("/get_rules", async function(req, res) {
   var familyId = await queryFamilyId(req.query.familyId, req.query.familyName, "add rule");
@@ -278,25 +398,13 @@ router.get("/get_rules", async function(req, res) {
   }
 
   sqlHelper.query(`
-    SELECT id, description, scoring
+    SELECT id, description, scoring, remarks
     FROM gp_rule
     WHERE familyId=${familyId}
+    ORDER BY description
   `).then(out => {
     res.send({data: out});
   });
-});
-
-/**
- * @api {get} /api/family/del_rule 删除规则
- * @apiGroup Family
- * @apiParam {Number} [familyId] 家庭Id
- * @apiParam {String} [familyName] 家庭名称
- * @apiSuccess {Object[]} rules 规则列表
- * @apiSuccess {String} members.description 规则描述
- * @apiSuccess {Number} members.scoring 规则分数
- */
-router.get("/delete_rules", function(req, res) {
-  
 });
 
 /**
@@ -342,4 +450,5 @@ var getFamily = function(req, res) {
   });
 }
 
-module.exports = router;
+// module.exports = router;
+exports.router = router;

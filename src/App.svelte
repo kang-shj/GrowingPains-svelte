@@ -5,3 +5,6 @@
 </script>
 
 <Router {routes} />
+
+<style>
+</style>

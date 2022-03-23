@@ -116,11 +116,27 @@ export default {
     }));
   },
 
-  addRule: function(familyId, description, scoring) {
+  addRule: function(familyId, description, scoring, remarks) {
     return this.do(comm.post("/api/family/add_rule", {
       familyId: familyId,
       description: description,
-      scoring: scoring
+      scoring: scoring,
+      remarks: remarks
+    }));
+  },
+
+  editRule: function(ruleId, description, scoring, remarks) {
+    return this.do(comm.post("/api/family/update_rule", {
+      id: ruleId,
+      description: description,
+      scoring: scoring,
+      remarks: remarks
+    }));
+  },
+
+  deleteRule: function(ruleId) {
+    return this.do(comm.post("/api/family/delete_rule", {
+      id: ruleId,
     }));
   },
 

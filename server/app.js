@@ -14,6 +14,8 @@ app.use(bodyparser.urlencoded({ extended: true }));
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
 
+const err = require('./error');
+
 /* mysql */
 const sqlHelper = require("./dao/sqlHelper");
 sqlHelper.init({
@@ -101,7 +103,7 @@ app.use(expressJwt({
 app.use(function(err, req, res, next) {
     if (err.status == 401) {
         return res.status(401).json({
-            error: 'token失效'
+            error: err.Token
         });
     }
 });
@@ -124,7 +126,15 @@ var api = express.Router();
 app.use('/api', api);
 
 api.all('/test', function(req, res) {
-    res.send("abcdefg");
+    familyApi.updateRule(Object.assign(
+        req.body,
+        req.query,
+        req.params,
+    ), "test").then(response => {
+        res.json({
+            date: response
+        });
+    });
 });
 
 var setToken = function(res, token) {
@@ -202,13 +212,15 @@ api.post('/login_password', function(req, res) {
                 });
             });
         } else {
-            res.json({token: "login error"});
+            res.json({error: err.UserOrPassword});
         }
     });
 });
 
+const familyApi = require('./api/family.js');
+const { response } = require('express');
 api.use('/user', require('./api/user.js'));
-api.use('/family', require('./api/family.js'));
+api.use('/family', familyApi.router);
 api.use('/scoring', require('./api/scoring.js'));
 
 /* End api */
