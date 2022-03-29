@@ -19,6 +19,10 @@
     dispatch("select", index);
   }
 
+  export function clear() {
+    select = "";
+  }
+
 </script>
 
 <main>

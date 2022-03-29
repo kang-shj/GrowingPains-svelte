@@ -14,7 +14,7 @@ function setUserId(id) {
   userId = id;
 } 
 
-function query(sql, notes) {
+function query(sql, notes, req) {
   return new Promise((resolve, reject) => {
     if (pool !== null) {
       pool.getConnection((err1, connection) => {
@@ -23,14 +23,13 @@ function query(sql, notes) {
           reject(err1);
         } else {
           // console.log({connection});
-
-          console.log('sql query => ' + sql);
+          console.log(req, 'sql query => ' + sql);
           connection.query(sql, (err2, result) => {
             if (err2) {
               console.log({err2});
               reject(err2);
             } else {
-              console.log({result});
+              console.log(req, {result});
               resolve(result);
             }
             connection.release();

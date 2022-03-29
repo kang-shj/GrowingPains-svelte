@@ -254,7 +254,7 @@ router.post("/add_rule", async function(req, res) {
 /**
  * @api {post} /api/family/update_rule/:id 更改规则
  * @apiGroup Family
- * @appParam {Number} id 规则Id
+ * @apiParam {Number} id 规则Id
  * @apiParam {String} description 规则描述
  * @apiParam {Number} scoring 规则分数
  * @apiParam {String} remarks 备注
@@ -324,7 +324,7 @@ exports.updateRule = updateRule;
 /**
  * @api {post} /api/family/cancel_rule/:id 取消规则
  * @apiGroup Family
- * @appParam {Number} id 规则Id
+ * @apiParam {Number} id 规则Id
  */
 router.post("/cancel_rule", async function (req, res) {
   var ruleId = req.params.id || req.body.id;
@@ -356,7 +356,7 @@ var addRule = function (args, notes = "") {
 /**
  * @api {get} /api/family/rule/:id 获取规则
  * @apiGroup Family
- * @apiParams {Number} id 规则Id
+ * @apiParam {Number} id 规则Id
  * @apiSuccess {String} description 描述
  * @apiSuccess {Number} scoring 分数
  * @apiSuccess {String} remarks 备注
@@ -405,6 +405,19 @@ router.get("/get_rules", async function(req, res) {
   `).then(out => {
     res.send({data: out});
   });
+});
+
+/**
+ * @api {get} /api/family/del_rule 删除规则
+ * @apiGroup Family
+ * @apiParam {Number} [familyId] 家庭Id
+ * @apiParam {String} [familyName] 家庭名称
+ * @apiSuccess {Object[]} rules 规则列表
+ * @apiSuccess {String} members.description 规则描述
+ * @apiSuccess {Number} members.scoring 规则分数
+ */
+router.get("/delete_rules", function(req, res) {
+  
 });
 
 /**

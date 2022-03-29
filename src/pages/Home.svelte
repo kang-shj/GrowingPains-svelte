@@ -70,10 +70,14 @@
   function appendRule() {
     api.addScoring(curMemberId, addRule.id).then(response => {
       getScorings(curMemberId);
-      addRule = undefined
+      var childrenIndex = childs.findIndex(children => children.memberId === curMemberId);
+      childs[childrenIndex].score += addRule.scoring;
+      addRule = undefined;
+      ruleSelecter.clear();
     });
   };
 
+  var ruleSelecter;
 </script>
 
 <main>
@@ -110,7 +114,7 @@
     {#if $member.roleId === 2 && curMemberId > 0}
       <div style="display: flex; align-items: center;">
         添加计分：
-        <DropdownButton hint="点击选择规则" items={rules.map(rule => `${rule.description}  ${rule.scoring}`)} on:select={selectRule}>
+        <DropdownButton bind:this={ruleSelecter} hint="点击选择规则" items={rules.map(rule => `${rule.description}  ${rule.scoring}`)} on:select={selectRule}>
         </DropdownButton>
         <!-- <DropdownShell let:toggle>
           <Button on:click={toggle}>

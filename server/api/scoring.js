@@ -104,6 +104,7 @@ router.get("/get_score", async function(req, res) {
  * @api {get} /api/scoring/get_scorings 获取计分列表
  * @apiGroup Scoring
  * @apiParam {Number} [memberId] 成员id
+ * @apiParam {Number} [page] 页数
  * @apiSuccess {Object[]} scorings 计分列表
  * @apiSuccess {Number} scorings.id 计分Id
  * @apiSuccess {String} scorings.time 时间
@@ -127,5 +128,7 @@ router.get("/get_scorings", async function(req, res) {
     });
   });
 });
+
+
 
 module.exports = router;

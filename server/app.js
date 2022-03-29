@@ -14,7 +14,19 @@ app.use(bodyparser.urlencoded({ extended: true }));
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
 
-const err = require('./error');
+console.log = (function(oriLogFunc) {
+    return function(req, ...logs) {
+        if (req === undefined) {
+            oriLogFunc.call(console, ...logs);
+        } else if (req.url === undefined) {
+            var log = req;
+            oriLogFunc.call(console, log, ...logs);
+        } else {
+            var now = new Date();
+            oriLogFunc.call(console, `{${now.toLocaleDateString()} ${now.toTimeString().substring(0, 8)}, ${req.url}} => `, ...logs);
+        }
+    }
+}) (console.log);
 
 /* mysql */
 const sqlHelper = require("./dao/sqlHelper");
@@ -152,8 +164,9 @@ api.post('/register_password', function(req, res) {
     var username = req.body.username;
     var password = req.body.password;
 
+    console.log(req);
     sqlHelper.query(`CALL register_password('${username}', '${password}', @result)`).then(out => {
-        console.log({out});
+        console.log(req, {out});
         var result = out[0][0];
         var user = {
             id: result.out_result,
@@ -178,7 +191,7 @@ api.post('/register_password', function(req, res) {
  * @apiParam {String} password 密码
  */
 api.post('/login_password', function(req, res) {
-    console.log('req.body => ', req.body);
+    console.log(req, 'req.body => ', req.body);
 
     var username = req.body.username;
     var password = req.body.password;
@@ -190,8 +203,9 @@ api.post('/login_password', function(req, res) {
         return;
     } 
 
+    console.log(req);
     sqlHelper.query(`CALL login_password('${username}', '${password}', @result)`).then(async out => {
-        console.log({out});
+        console.log(req, {out});
         var result = out[0][0];
         if (result.out_result > 0) {
             var info = await sqlHelper.query(`
