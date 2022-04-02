@@ -1,5 +1,5 @@
 // const Host = "http://cooljie2000.oicp.net:12000";
-const Host = "/";
+const Host = "";
 
 let token = "";
 
