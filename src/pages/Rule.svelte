@@ -105,8 +105,7 @@
             {/if}
           </Button>
           <Button round neutral on:click={doDeleteRule(item)}>
-            <!-- <Trash2Icon size="20" /> -->
-            <Loading />
+            <Trash2Icon size="20" />
           </Button>
         </div>
       {:else}
