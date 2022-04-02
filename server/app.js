@@ -5,7 +5,26 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const port = process.env.PORT || 22000;
+
+var port = process.env.PORT || 22000;
+var database = "growingpainslib_test";
+
+process.argv.forEach(arg => {
+    if (arg.indexOf("--") === 0) {
+        var param = arg.substring(2, arg.indexOf("="));
+        var value = arg.substring(arg.indexOf("=") + 1);
+        console.log({param}, {value});
+
+        switch(param.toLowerCase()) {
+            case "port":
+                port = value;
+                break;
+            case "database":
+                database = value;
+                break;
+        }
+    }
+});
 
 const bodyparser = require('body-parser');
 app.use(bodyparser.json()); // 使用bodyparder中间件，
@@ -33,7 +52,7 @@ const sqlHelper = require("./dao/sqlHelper");
 sqlHelper.init({
     host: "cooljie2000.oicp.net",
     port: "3306",
-    database: "growingpainslib_test",
+    database: database,
 }, 'kangsj', 'kjy08191211');
 /* End mysql */
 

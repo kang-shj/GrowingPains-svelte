@@ -59,7 +59,10 @@
 
   function onAddRule() {
     api.addRule($family.id, newRule.description, newRule.scoring, newRule.remarks).then(response => {
-      rules.push(newRule);
+      rules.push({
+        description: newRule.description,
+        scoring: newRule.scoring
+      });
       rules = rules;
       openAddRule = false;
     });
